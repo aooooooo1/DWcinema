@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.dw.dao.ReservationDAO">
+	
+	<select id="selectMovieTheater" resultType="Map">
+		SELECT t.thr_name thr_name, t.thr_loc thr_loc
+		FROM (
+				SELECT thr_name
+				FROM (
+						SELECT house_no
+						FROM screen
+						WHERE movie_cd = #{movie_cd}
+						AND TO_char(startdate, 'YYYY-MM-DD') = #{date}
+						AND startdate <![CDATA[>]]> sysdate
+						GROUP BY house_no
+					) s, house h
+				WHERE h.house_no = s.house_no
+				GROUP BY thr_name
+			) h1, theater t
+		WHERE h1.thr_name = t.thr_name
+		AND gb_del = 'N'
+	</select>
+	
+	<select id="selectAllTheater" resultType="Map">
+		SELECT thr_loc, thr_name
+		FROM theater
+		WHERE gb_del = 'N'
+	</select>
+	
+	<select id="selectScreenSchedual" resultType="Map">
+		SELECT a.*, h.*
+		FROM (
+			SELECT screen_cd, house_no, m.movie_cd movie_cd, startdate, gb_jojo, s.movie_type_cd movie_type_cd, movie_type_des, movie_length
+			FROM screen s, movie_type mt, movie m
+			WHERE s.movie_type_cd = mt.movie_type_cd
+			AND s.movie_cd = m.movie_cd
+			AND s.movie_cd = #{movie_cd}
+			AND TO_char(startdate, 'YYYY-MM-DD') = #{date}
+			AND startdate <![CDATA[>]]> sysdate
+			) a, house h
+		WHERE a.house_no = h.house_no
+		AND thr_name = #{thr_name}
+		ORDER BY startdate
+	</select>
+	
+	<select id="buySeatCount" resultType="int">
+		SELECT count(*) buySeat
+		FROM reservation r
+		WHERE screen_cd = #{screen_cd}
+		AND gb_cancel = 'N'
+	</select>
+	
+	<select id="selectScreen" resultType="Map">
+		SELECT m.*, h.*, mt.*, s.screen_cd screen_cd, startdate, gb_jojo
+		FROM screen s, movie m, house h, movie_type mt
+		WHERE s.movie_cd = m.movie_cd
+		AND s.house_no = h.house_no
+		AND s.movie_type_cd = mt.movie_type_cd
+		AND screen_cd = #{screen_cd}
+	</select>
+	
+	<select id="selectBuySeatList" resultType="str">
+		SELECT res_seat
+		FROM reservation
+		WHERE screen_cd = #{screen_cd}
+		AND gb_cancel = 'N'
+	</select>
+	
+	<select id="selectAllMovieRes" resultType="movie">
+		SELECT *
+		FROM movie
+		WHERE enddate <![CDATA[>]]> sysdate
+	</select>
+	
+	<select id="selectPaymentScreenInfo" resultType="Map">
+		SELECT s.screen_cd screen_cd, house_name, startdate, movie_type_des, movie_name, movie_length, thr_name, house_name, movie_mainpic_path, s.movie_cd
+		FROM screen s, movie m, house h, movie_type mt
+		WHERE s.movie_cd = m.movie_cd
+		AND s.house_no = h.house_no
+		AND s.movie_type_cd = mt.movie_type_cd
+		AND s.screen_cd = #{screen_cd}
+	</select>
+	
+	<insert id="insertRes" parameterType="reservation">
+		INSERT INTO reservation (res_no, merchant_uid, mem_cd, screen_cd, mem_cat, res_seat, resdate, pricesum, gb_cancel, discount, mem_coupon_no, use_point) 
+							values(
+							#{res_no} || LPAD(res_seq.nextval,4,0), 
+							#{merchant_uid}, 
+							#{mem_cd}, 
+							#{screen_cd}, 
+							#{mem_cat}, 
+							#{res_seat}, 
+							sysdate,
+							#{pricesum},
+							'N',
+							#{discount},
+							#{mem_coupon_no},
+							#{use_point})
+	</insert>
+	
+	<insert id="insertPay0Res1">
+		INSERT INTO reservation (res_no, merchant_uid, mem_cd, screen_cd, mem_cat, res_seat, resdate, pricesum, gb_cancel, discount, mem_coupon_no, use_point) 
+							values(
+							#{res_no} || LPAD(pay_seq.nextval,4,0) || LPAD(res_seq.nextval,4,0), 
+							'M' || #{merchant_uid} || LPAD(pay_seq.nextval,4,0), 
+							#{mem_cd}, 
+							#{screen_cd}, 
+							#{mem_cat}, 
+							#{res_seat}, 
+							sysdate,
+							#{pricesum},
+							'N',
+							#{discount},
+							#{mem_coupon_no},
+							#{use_point})
+		<selectKey resultType="str" keyProperty="merchant_uid" order="AFTER">
+			SELECT 'M' || #{merchant_uid} || LPAD(pay_seq.currval,4,0) merchant_uid FROM dual
+		</selectKey>
+	</insert>
+	
+	<insert id="insertPay0Res">
+		INSERT INTO reservation (res_no, merchant_uid, mem_cd, screen_cd, mem_cat, res_seat, resdate, pricesum, gb_cancel, discount, mem_coupon_no, use_point) 
+							values(
+							REPLACE(#{merchant_uid},'M','') || LPAD(res_seq.nextval,4,0), 
+							#{merchant_uid}, 
+							#{mem_cd}, 
+							#{screen_cd}, 
+							#{mem_cat}, 
+							#{res_seat}, 
+							sysdate,
+							#{pricesum},
+							'N',
+							#{discount},
+							#{mem_coupon_no},
+							#{use_point})
+	</insert>
+	
+	<update id="useMemCoupon">
+		UPDATE mem_coupon SET gb_use = 'Y' WHERE mem_coupon_no = #{mem_coupon_no}
+	</update>
+	
+	<insert id="useMemPoint" parameterType="point">
+		INSERT INTO point (point_cd, mem_cd, relate_cd, point, regdate) VALUES('U' || to_char(sysdate, 'yyyyMMdd') || LPAD(point_seq.nextval,4,0), #{mem_cd}, #{merchant_uid}, #{point}, sysdate)
+	</insert>
+	
+	<insert id="insertPayDetail">
+		INSERT INTO pay_detail (
+									imp_uid,
+									apply_num,
+									card_name,
+									card_number,
+									pay_method,
+									merchant_uid,
+									card_quota,
+									status,
+									paid_amount,
+									receipt_url
+								)
+							VALUES(
+									#{imp_uid},
+									#{apply_num},
+									#{card_name},
+									#{card_number},
+									#{pay_method},
+									'M' || #{merchant_uid} || LPAD(pay_seq.nextval,4,0),
+									#{card_quota},
+									#{status},
+									#{paid_amount},
+									#{receipt_url}
+							)
+							
+		<selectKey resultType="str" keyProperty="merchant_uid" order="AFTER">
+			SELECT 'M' || #{merchant_uid} || LPAD(pay_seq.currval,4,0) merchant_uid FROM dual
+		</selectKey>
+	</insert>
+	
+	<select id="selectReservationByMUID" resultType="reservation">
+		SELECT *
+		FROM reservation
+		WHERE merchant_uid = #{merchant_uid}
+	</select>
+	
+	<select id="selectPayDetailByMUID" resultType="paydetail">
+		SELECT *
+		FROM pay_detail
+		WHERE merchant_uid = #{merchant_uid}
+	</select>
+	
+	<select id="selectCouponList" resultType="coupon">
+		SELECT *
+		FROM mem_coupon mc, coupon c
+		WHERE mc.coupon_cd = c.coupon_cd
+		AND to_char(enddate, 'yyyyMMdd') >= to_char(sysdate, 'yyyyMMdd')
+		AND gb_use = 'N'
+		AND mem_cd = #{mem_cd}
+	</select>
+	
+	<select id="selectMemPointList" resultType="point">
+		SELECT *
+		FROM point
+		WHERE mem_cd = #{mem_cd}
+	</select>
+	
+	<select id="selectMemLikeThr" resultType="str">
+		SELECT mlt.thr_name
+		FROM mem_like_theater mlt, theater t
+		WHERE mlt.thr_name = t.thr_name
+		AND gb_del = 'N'
+		AND mem_cd = #{mem_cd}
+	</select>
+	
+	<select id="selectResSMSInfo" resultType="Map">
+		SELECT mem_phone, movie_name, startdate
+		FROM screen s, movie m, MEMBER mb, reservation r
+		WHERE r.screen_cd = s.screen_cd
+		AND s.movie_cd = m.movie_cd
+		AND r.mem_cd = mb.mem_cd
+		AND merchant_uid = #{merchant_uid}
+	</select>
+	
+	<select id="selectNonMemResSMSInfo" resultType="Map">
+		SELECT non_mem_phone, movie_name, startdate
+		FROM screen s, movie m, non_MEMBER nm, reservation r
+		WHERE r.screen_cd = s.screen_cd
+		AND s.movie_cd = m.movie_cd
+		AND nm.non_mem_cd = r.mem_cd
+		AND merchant_uid =  #{merchant_uid}
+	</select>
+	
+	<insert id="insertNonMem">
+		INSERT INTO non_member (non_mem_cd, non_mem_name, non_mem_bir, non_mem_phone, non_mem_pwd)	
+		VALUES ('N' || TO_char(sysdate, 'YYYYMMDD') || lpad(mem_seq.nextval,4,0)
+				, #{non_mem_name}
+				, #{non_mem_bir_d}
+				, #{non_mem_phone}
+				, #{non_mem_pwd}
+		)	
+		<selectKey resultType="str" keyProperty="non_mem_cd" order="AFTER">
+			SELECT 'N' || TO_char(sysdate, 'YYYYMMDD') || lpad(mem_seq.currval,4,0) non_mem_cd FROM dual
+		</selectKey>
+	</insert>
+	
+	<insert id="insert0payDetail">
+		INSERT INTO pay_detail (imp_uid,
+								pay_method,
+								merchant_uid,
+								status,
+								paid_amount,
+								card_quota)
+					VALUES( 'Z' || to_char(sysdate, 'yyyyMMdd') || LPAD(imp_seq.nextval,4,0),
+							'point',
+							#{merchant_uid},
+							'paid',
+							0,
+							0)
+	</insert>
+</mapper>

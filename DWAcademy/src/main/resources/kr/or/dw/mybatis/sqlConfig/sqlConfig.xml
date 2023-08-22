@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration
+	PUBLIC "-//mybatis.org//DTD Config 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+    <settings>
+    	<setting name="jdbcTypeForNull" value="NULL" />
+    </settings>
+	<typeAliases>
+		<typeAlias type="java.lang.String" alias="str"/>
+		<typeAlias type="java.lang.Integer" alias="int"/>
+		<typeAlias type="kr.or.dw.vo.ProductVO" alias="product"/>
+		<typeAlias type="kr.or.dw.vo.MemberVO" alias="member"/>
+		<typeAlias type="kr.or.dw.vo.TheaterVO" alias="theater"/>
+		<typeAlias type="kr.or.dw.vo.ReservationVO" alias="reservation"/>
+		<typeAlias type="kr.or.dw.vo.PayDetailVO" alias="paydetail"/>
+		<typeAlias type="kr.or.dw.vo.MovieVO" alias="movie"/>
+		<typeAlias type="kr.or.dw.vo.AdminVO" alias="admin"/>
+		<typeAlias type="kr.or.dw.vo.MoviePictureVO" alias="moviePic"/>
+		<typeAlias type="kr.or.dw.vo.MoviePreviewVO" alias="moviePre"/>
+		<typeAlias type="kr.or.dw.vo.MoviePostVO" alias="moviepost"/>
+		<typeAlias type="kr.or.dw.vo.ReviewVO" alias="review"/>
+		<typeAlias type="kr.or.dw.vo.HouseVO" alias="house"/>
+		<typeAlias type="kr.or.dw.vo.ScreenVO" alias="screen"/>
+		<typeAlias type="kr.or.dw.vo.GenreVO" alias="genre"/>
+		<typeAlias type="kr.or.dw.vo.SnsVO" alias="sns"/>
+		<typeAlias type="kr.or.dw.vo.CouponVO" alias="coupon"/>
+		<typeAlias type="kr.or.dw.vo.PointVO" alias="point"/>
+		<typeAlias type="kr.or.dw.vo.NoticeVO" alias="notice"/>
+		<typeAlias type="kr.or.dw.vo.FaqVO" alias="faq"/>
+		<typeAlias type="kr.or.dw.vo.QnaVO" alias="qna"/>
+		<typeAlias type="kr.or.dw.vo.AnswerVO" alias="ans"/>
+		<typeAlias type="kr.or.dw.vo.EventVO" alias="event"/>
+		<typeAlias type="kr.or.dw.vo.MemBuyVO" alias="membuy"/>
+		<typeAlias type="kr.or.dw.vo.Non_MemberVO" alias="nonmem"/>
+		<typeAlias type="kr.or.dw.vo.WinnerBoardVO" alias="wb"/>
+		<typeAlias type="kr.or.dw.vo.Admin_NoteVO" alias="note"/>
+		<typeAlias type="kr.or.dw.vo.QnaAttachVO" alias="attach"/>
+		<typeAlias type="kr.or.dw.vo.PhotoTicketVO" alias="photoTicket"/>
+
+	</typeAliases>
+
+</configuration>

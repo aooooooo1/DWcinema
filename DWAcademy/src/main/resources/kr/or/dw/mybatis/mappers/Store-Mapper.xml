@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.dw.dao.StoreDAO">
+	
+	<select id="selectProductFood" resultType="product">
+		SELECT *
+		FROM product
+		WHERE product_div = '팝콘/스낵/음료' 
+		AND ROWNUM <![CDATA[<=]]> 8
+	</select>
+	
+	
+	<select id="selectProDiv" parameterType="str" resultType="product">
+		SELECT *
+		FROM product
+		WHERE 1 = 1
+		<if test="CategoryIdx == '1'.toString()">
+			AND product_div = '기프트카드'
+		</if>
+		<if test="CategoryIdx == '2'.toString()">
+			AND product_div = '팝콘/스낵/음료'
+		</if>
+		AND gb_del = 'N'
+	</select>
+	
+	<select id="selectProDetail" parameterType="str" resultType="product">
+		SELECT *
+		FROM product
+		WHERE product_cd = #{product_cd}
+	</select>
+	
+	<insert id="insertPayDetail" parameterType="paydetail">
+		INSERT INTO pay_detail (
+									imp_uid,
+									apply_num,
+									card_name,
+									card_number,
+									pay_method,
+									merchant_uid,
+									card_quota,
+									status,
+									paid_amount,
+									receipt_url
+								)
+							VALUES(
+									#{imp_uid},
+									#{apply_num},
+									#{card_name},
+									#{card_number},
+									#{pay_method},
+									'P' || #{merchant_uid} || LPAD(pay_seq.nextval,4,0),
+									#{card_quota},
+									#{status},
+									#{paid_amount},
+									#{receipt_url}
+							)
+							
+		<selectKey resultType="str" keyProperty="merchant_uid" order="AFTER">
+			SELECT 'P' || #{merchant_uid} || LPAD(pay_seq.currval,4,0) merchant_uid FROM dual
+		</selectKey>
+	</insert>
+	<insert id="insertPayDetailG" parameterType="paydetail">
+		INSERT INTO pay_detail (
+									imp_uid,
+									apply_num,
+									card_name,
+									card_number,
+									pay_method,
+									merchant_uid,
+									card_quota,
+									status,
+									paid_amount,
+									receipt_url
+								)
+							VALUES(
+									#{imp_uid},
+									#{apply_num},
+									#{card_name},
+									#{card_number},
+									#{pay_method},
+									'G' || #{merchant_uid} || LPAD(pay_seq.nextval,4,0),
+									#{card_quota},
+									#{status},
+									#{paid_amount},
+									#{receipt_url}
+							)
+							
+		<selectKey resultType="str" keyProperty="merchant_uid" order="AFTER">
+			SELECT 'G' || #{merchant_uid} || LPAD(pay_seq.currval,4,0) merchant_uid FROM dual
+		</selectKey>
+	</insert>
+	
+	<insert id="insertMemBuy">
+		INSERT INTO mem_buy (merchant_uid,
+							 product_cd,
+							 mem_cd,
+							 buydate,
+							 amount,
+							 pricesum,
+							 discount,
+							 use_point,
+							 gb_cancel)
+					VALUES (
+							 #{merchant_uid},
+							 #{product_cd},
+							 #{mem_cd},
+							 sysdate,
+							 #{amount},
+							 #{pricesum},
+							 #{discount},
+							 #{use_point},
+							 'N'
+					)
+					
+	</insert>
+	
+	<insert id="insertMemPro">
+		INSERT INTO mem_product (mem_product_cd, mem_cd, product_cd, gb_use, enddate, merchant_uid) VALUES 
+		(#{product_cd} || lpad(mem_pro_seq.nextval,4,0), #{mem_cd}, #{product_cd}, 'N', sysdate + (SELECT product_period FROM product WHERE product_cd = #{product_cd}), #{merchant_uid})
+	</insert>
+	
+	<select id="selectBuyResult" resultType="Map">
+		SELECT b.merchant_uid merchant_uid, b.product_cd product_cd, amount, paid_amount, product_name, product_content, product_pic_path, receipt_url
+		FROM mem_buy b, pay_detail d, product p
+		WHERE b.merchant_uid = d.merchant_uid
+		AND b.product_cd = p.product_cd
+		AND b.merchant_uid = #{merchant_uid}
+	</select>
+	
+	<select id="selectGiftInfo" resultType="Map">
+		SELECT product_name, merchant_uid, product_period
+		FROM mem_buy b, product p
+		WHERE b.product_cd = p.product_cd
+		AND merchant_uid = #{merchant_uid}
+	</select>
+	
+	<select id="selectMemPointList" resultType="point">
+		SELECT *
+		FROM point
+		WHERE mem_cd = #{mem_cd}
+	</select>
+	
+	<insert id="useMemPoint" parameterType="point">
+		INSERT INTO point (point_cd, mem_cd, relate_cd, point, regdate) VALUES('U' || to_char(sysdate, 'yyyyMMdd') || LPAD(point_seq.nextval,4,0), #{mem_cd}, #{merchant_uid}, #{point}, sysdate)
+	</insert>
+	
+	<insert id="insertMembuy0">
+		INSERT INTO mem_buy (merchant_uid,
+							 product_cd,
+							 mem_cd,
+							 buydate,
+							 amount,
+							 pricesum,
+							 discount,
+							 use_point,
+							 gb_cancel)
+					VALUES (
+							'P' || #{merchant_uid} || LPAD(pay_seq.nextval,4,0),
+							 #{product_cd},
+							 #{mem_cd},
+							 sysdate,
+							 #{amount},
+							 #{pricesum},
+							 #{discount},
+							 #{use_point},
+							 'N'
+					)
+		<selectKey resultType="str" keyProperty="merchant_uid" order="AFTER">
+			SELECT 'P' || #{merchant_uid} || LPAD(pay_seq.currval,4,0) merchant_uid FROM dual
+		</selectKey>
+	</insert>
+	
+	<insert id="insertMemgift0">
+		INSERT INTO mem_buy (merchant_uid,
+							 product_cd,
+							 mem_cd,
+							 buydate,
+							 amount,
+							 pricesum,
+							 discount,
+							 use_point,
+							 gb_cancel)
+					VALUES (
+							'G' || #{merchant_uid} || LPAD(pay_seq.nextval,4,0),
+							 #{product_cd},
+							 #{mem_cd},
+							 sysdate,
+							 #{amount},
+							 #{pricesum},
+							 #{discount},
+							 #{use_point},
+							 'N'
+					)
+		<selectKey resultType="str" keyProperty="merchant_uid" order="AFTER">
+			SELECT 'G' || #{merchant_uid} || LPAD(pay_seq.currval,4,0) merchant_uid FROM dual
+		</selectKey>
+	</insert>
+	
+	<insert id="insert0payDetail">
+		INSERT INTO pay_detail (imp_uid,
+								pay_method,
+								merchant_uid,
+								status,
+								paid_amount,
+								card_quota)
+					VALUES( 'Z' || to_char(sysdate, 'yyyyMMdd') || LPAD(imp_seq.nextval,4,0),
+							'point',
+							#{merchant_uid},
+							'paid',
+							0,
+							0)
+	</insert>
+</mapper>

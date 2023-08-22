@@ -1,0 +1,1175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="kr.or.dw.dao.SysAdminDAO">
+
+	<sql id="searchThr">
+		<if test="searchType == 'n'.toString()">
+			AND t.thr_name LIKE '%' || #{keyword} || '%'
+		</if>
+		<if test="searchType == 'l'.toString()">
+			AND t.thr_loc LIKE '%' || #{keyword} || '%'
+		</if>
+		<if test="searchType == 'a'.toString()">
+			AND t.thr_addr LIKE '%' || #{keyword} || '%'
+		</if>
+		<if test="searchType == 'i'.toString()">
+			AND a.admin_id LIKE '%' || #{keyword} || '%'
+		</if>
+		<if test="searchType == 'p'.toString()">
+			AND t.thr_tel LIKE '%' || #{keyword} || '%'
+		</if>
+		<if test="searchType == 'nlaip'.toString()">
+			AND (
+				t.thr_name LIKE '%' || #{keyword} || '%'
+				OR
+				t.thr_loc LIKE '%' || #{keyword} || '%'
+				OR
+				t.thr_addr LIKE '%' || #{keyword} || '%'
+				OR
+				a.admin_id LIKE '%' || #{keyword} || '%'
+				OR
+				t.thr_tel LIKE '%' || #{keyword} || '%'
+				)
+		</if>
+	</sql>
+	
+	<sql id="searchKeywordMov">
+ 		<if test="keyword == 'f'.toString()"> 
+	 		 <![CDATA[
+				AND m.opendate > SYSDATE 
+ 			 ]]>  
+ 		</if>
+		<if test="keyword == ''.toString()">
+			<![CDATA[
+				AND m.ENDDATE > SYSDATE 
+ 			 ]]> 
+		</if>  
+	</sql>
+	
+	<sql id="searchTypeMov">
+		<if test="searchType == ''.toString()">
+			ORDER BY r.reserve DESC NULLS last
+		</if>
+		<if test="searchType == 'r'.toString()">
+			ORDER BY r.reserve DESC NULLS last
+		</if>
+		<if test="searchType == 'n'.toString()">
+			ORDER BY m.movie_name ASC
+		</if>
+		<if test="searchType == 'd'.toString()">
+			ORDER BY m.opendate ASC
+		</if>
+	</sql>
+	
+	<sql id="searchNotice">
+		<if test="searchType == 'all'.toString()">
+		</if>
+		<if test="searchType == 'thr'.toString()">
+			AND notice_thr != 'DW시네마'
+		</if>
+		<if test="searchType == 'dwc'.toString()">
+			AND notice_thr = 'DW시네마'
+		</if>
+		AND notice_title LIKE '%' || #{keyword} || '%'
+	</sql>
+	
+	<sql id="searchFaq">
+		<if test="searchType == 'all'.toString()">
+		</if>
+		<if test="searchType == 'reservation'.toString()">
+			AND faq_div = '영화예매'
+		</if>
+		<if test="searchType == 'pay'.toString()">
+			AND faq_div = '결제수단'
+		</if>
+		<if test="searchType == 'membership'.toString()">
+			AND faq_div = '멤버십'
+		</if>
+		<if test="searchType == 'store'.toString()">
+			AND faq_div = '스토어'
+		</if>
+		<if test="searchType == 'giftcard'.toString()">
+			AND faq_div = '기프트카드'
+		</if>
+		<if test="searchType == 'vip'.toString()">
+			AND faq_div = 'VIP'
+		</if>
+		<if test="searchType == 'theater'.toString()">
+			AND faq_div = '극장'
+		</if>
+		<if test="searchType == 'discount'.toString()">
+			AND faq_div = '할인혜택'
+		</if>
+		AND  (
+			 faq_title LIKE '%' || #{keyword} || '%'
+			 OR
+			 faq_content LIKE '%' || #{keyword} || '%'
+			 )
+	</sql>
+	
+	<sql id="searchQna">
+		<if test="searchType == 'b'.toString()">
+			AND que_type = '영화정보문의'
+		</if>
+		<if test="searchType == 'c'.toString()">
+			AND que_type = '회원 및 포인트 문의'
+		</if>
+		<if test="searchType == 'd'.toString()">
+			AND que_type = '예매/결제관련문의'
+		</if>
+		<if test="searchType == 'e'.toString()">
+			AND que_type = '이벤트문의'
+		</if>
+		<if test="searchType == 'f'.toString()">
+			AND que_type = '일반문의'
+		</if>
+		<if test="searchType == 'g'.toString()">
+			AND que_type = '제안/건의'
+		</if>
+		<if test="searchType2 == 'b'.toString()">
+			AND a.ans_content IS NULL
+		</if>
+		<if test="searchType2 == 'c'.toString()">
+			AND a.ans_content IS NOT NULL
+		</if>
+		AND (
+			que_title LIKE '%' || #{keyword} || '%'
+			OR
+			que_content LIKE '%' || #{keyword} || '%'
+			OR
+			writer_name LIKE '%' || #{keyword} || '%'
+			)
+	</sql>
+	
+	<sql id="searchEvent">
+		<if test="searchType == '영화'.toString()">
+			AND event_div = #{searchType}
+		</if>
+		<if test="searchType == '극장'.toString()">
+			AND event_div = #{searchType}
+		</if>
+		<if test="searchType == '시사회/무대인사'.toString()">
+			AND event_div = #{searchType}
+		</if>
+		AND (
+			 event_title LIKE '%' || #{keyword} || '%'
+			 OR
+			 event_content LIKE '%' || #{keyword} || '%'
+			)
+	</sql>
+	
+	<sql id="searchPastEvent">
+		AND (
+			event_title LIKE '%' || #{keyword} || '%'
+			)
+	</sql>
+	
+	<sql id="searchMember">
+		<if test="searchType == 'ni'.toString()">
+			AND (
+				mem_id LIKE '%' || #{keyword} || '%'
+				OR
+				mem_name LIKE '%' || #{keyword} || '%'			
+				)
+		</if>
+		<if test="searchType == 'i'.toString()">
+			AND mem_id LIKE '%' || #{keyword} || '%'
+		</if>
+		<if test="searchType == 'n'.toString()">
+			AND mem_name LIKE '%' || #{keyword} || '%'
+		</if>
+		
+		<if test="searchType2 == 'sbd'.toString()">
+		</if>
+		<if test="searchType2 == 's'.toString()">
+			AND gb_sleep = 'Y'
+		</if>
+		<if test="searchType2 == 'b'.toString()">
+			AND gb_ban = 'Y'
+		</if>
+		<if test="searchType2 == 'd'.toString()">
+			AND gb_del = 'Y'
+		</if>
+		
+		<if test="orderType == 'inr'.toString()">
+		</if>
+		<if test="orderType == 'i'.toString()">
+			ORDER BY mem_id ASC 
+		</if>
+		<if test="orderType == 'n'.toString()">
+			ORDER BY mem_name ASC
+		</if>
+		<if test="orderType == 'r'.toString()">
+			ORDER BY regdate DESC
+		</if>
+	</sql>
+	
+	<select id="selectSearchTheaterList" resultType="theater">
+		SELECT t.*, a.admin_id, a.admin_pwd, (SELECT COUNT(*) FROM house WHERE thr_name = t.THR_NAME AND GB_DEL = 'N') houseCnt
+		  FROM theater t, admin a
+		 WHERE t.admin_cd = a.admin_cd
+		 <include refid="searchThr" />
+		 ORDER BY t.gb_del ASC, t.regdate DESC
+	</select>
+	
+	<select id="selectSearchTheaterListCount" resultType="int">
+		SELECT COUNT(*)
+		  FROM theater t, admin a
+		 WHERE t.admin_cd = a.admin_cd
+		 <include refid="searchThr" />
+	</select>
+	
+	<select id="selectLocList" resultType="str">
+		SELECT thr_loc
+		  FROM loc
+	</select>
+	
+	<insert id="insertAdmin">
+		INSERT INTO admin
+					(
+					 admin_cd
+					,admin_id
+					,admin_pwd
+					,thr_name
+					)
+			 VALUES
+					(
+					 'T' || (SELECT TO_CHAR(SYSDATE, 'YYYYMMDD') FROM dual) || LPAD(admin_seq.nextval,4,0)
+					,#{admin_id}
+					,#{admin_pwd}
+					,#{thr_name}
+					)
+ 		<selectKey resultType="str" keyProperty="admin_cd" order="AFTER">
+			SELECT 'T' || (SELECT TO_CHAR(SYSDATE, 'YYYYMMDD') FROM dual d1) || LPAD(admin_seq.currval,4,0) admin_cd FROM dual d2
+		</selectKey>
+	</insert>
+	
+	<update id="updateAdmin" parameterType="admin">
+		UPDATE admin 
+		   SET admin_id = #{admin_id}
+		      ,admin_pwd = #{admin_pwd}
+		 WHERE thr_name = #{thr_name}
+	</update>
+	
+	<insert id="insertTheater" parameterType="theater">
+		INSERT INTO theater
+					(
+					 thr_name
+					,thr_info 
+					,thr_loc
+					,thr_addr 
+					,thr_addr_detail
+					,thr_addr_post
+					,thr_tel
+					,regdate
+					,thr_x
+					,thr_y
+					,admin_cd
+					,gb_del
+					)
+			 VALUES (
+			 		 #{thr_name}
+			 		,#{thr_info}
+			 		,#{thr_loc}
+			 		,#{thr_addr}
+			 		,#{thr_addr_detail}
+			 		,#{thr_addr_post}
+			 		,#{thr_tel}
+			 		,SYSDATE
+			 		,#{thr_x}
+			 		,#{thr_y}
+			 		,#{admin_cd}
+			 		,'Y'
+			 		)		
+	</insert>
+	
+	<update id="updateTheater" parameterType="theater">
+		UPDATE theater
+		   SET thr_info = #{thr_info}
+		      ,thr_loc = #{thr_loc}
+		      ,thr_tel = #{thr_tel}
+		      ,thr_addr_post = #{thr_addr_post}
+		      ,thr_addr = #{thr_addr}
+		      ,thr_addr_detail = #{thr_addr_detail}
+		 WHERE thr_name = #{thr_name}
+	</update>
+	
+	<update id="updateDelTheater" parameterType="theater">
+		UPDATE theater
+		   SET gb_del = 'Y'
+		 WHERE thr_name = #{thr_name}
+	</update>
+	
+	<update id="updateUndelTheater" parameterType="theater">
+		UPDATE theater
+		   SET gb_del = 'N'
+		 WHERE thr_name = #{thr_name}
+	</update>
+	
+	<select id="selectTheaterByName" parameterType="str" resultType="theater">
+		SELECT t.*, a.admin_id, a.admin_pwd
+		  FROM theater t, admin a
+		 WHERE t.thr_name = #{thr_name}
+		   AND t.thr_name = a.thr_name
+	</select>
+	
+	<select id="selectGenreList" resultType="genre">
+		SELECT *
+		  FROM genre
+	</select>
+	
+	<select id="selectGradeList" resultType="str">
+		SELECT *
+		  FROM movie_grade
+	</select>
+	
+	<insert id="insertMovie">
+		INSERT INTO movie 
+					(
+					 movie_cd
+					,movie_name
+					,movie_mainpic_path
+					,movie_director
+					,movie_length
+					,movie_info
+					,movie_actor
+					,movie_grade
+					,opendate
+					,enddate				
+					) 
+			 VALUES (
+			 		 #{movie_cd} || (SELECT TO_CHAR(SYSDATE, 'YYYYMMDD') FROM dual) || LPAD(movie_seq.nextval,4,0)
+			 		,#{movie_name}
+			 		,#{movie_mainpic_path}
+					,#{movie_director}
+					,#{movie_length}
+					,#{movie_info}
+					,#{movie_actor}
+					,#{movie_grade}
+					,#{opendate}
+					,#{enddate}
+			 		)
+		<selectKey resultType="str" keyProperty="movie_cd" order="AFTER">
+			SELECT #{movie_cd} || (SELECT TO_CHAR(SYSDATE, 'YYYYMMDD') FROM dual d1) || LPAD(movie_seq.currval,4,0) movie_cd FROM dual d2
+		</selectKey>
+	</insert>
+	
+	<insert id="insertGenre_c">
+		INSERT INTO genre_c
+					(
+					 genre_cd
+					,movie_cd
+					)
+			 VALUES (
+					 #{genre}
+					,#{movie_cd}			 
+			 		)	
+	</insert>
+	
+	<insert id="insertMovieType_c">
+		INSERT INTO movie_type_c
+					(
+					 movie_cd
+					,movie_type_cd		
+					)
+			 VALUES (
+			 		 #{movie_cd}
+			 		,#{movie_type_cd}
+			 		)		
+	</insert>
+	
+	<insert id="insertMoviePic">
+		INSERT INTO movie_picture
+					(
+					 movie_cd
+					,movie_pic_no
+					,movie_pic_path
+					)
+			 VALUES	(
+			 		 #{movie_cd}
+			 		,MOVIE_PIC_SEQ.nextval
+			 		,#{movie_pic_path}
+					)
+	</insert>
+	
+	<insert id="insertMoviePre">
+		INSERT INTO movie_preview
+					(
+					 movie_cd
+					,movie_pre_no
+					,movie_pre_path
+					)
+			 VALUES	(
+			 		 #{movie_cd}
+			 		,MOVIE_preview_SEQ.nextval
+			 		,#{movie_pre_path}
+					)
+	</insert>
+	
+	<select id="selectSearchMovieList" resultType="Map">
+		SELECT m.*, nvl(reserve,0)
+		FROM movie m, (
+			SELECT m.movie_cd, count(*) reserve
+			FROM movie m, screen s, reservation r
+			WHERE 1=1
+			AND m.movie_cd = s.movie_cd(+)
+			AND s.screen_cd = r.screen_cd(+)
+			AND TO_CHAR(resdate, 'YYYYMMDD') = TO_CHAR(sysdate-1,'YYYYMMDD')
+			GROUP BY m.movie_cd
+			) r
+		WHERE m.movie_cd = r.movie_cd(+)
+		 <include refid="searchKeywordMov" />
+		 <include refid="searchTypeMov" />
+	</select>
+	
+	<select id="selectSearchMovieListCount" resultType="int">
+		SELECT count(*)
+		FROM movie m, (
+			SELECT m.movie_cd, count(*) reserve
+			FROM movie m, screen s, reservation r
+			WHERE 1=1
+			AND m.movie_cd = s.movie_cd(+)
+			AND s.screen_cd = r.screen_cd(+)
+			AND TO_CHAR(resdate, 'YYYYMMDD') = TO_CHAR(sysdate-1,'YYYYMMDD')
+			GROUP BY m.movie_cd
+			) r
+		WHERE m.movie_cd = r.movie_cd(+)
+		 <include refid="searchKeywordMov" />
+		 <include refid="searchTypeMov" />
+	</select>
+	
+	<select id="selectReservRatio" resultType="double">
+		SELECT round((SELECT COUNT(*) 
+  		  			   				 FROM movie m1, reservation r1, screen s1 
+ 					 				WHERE s1.movie_cd = #{movie_cd}
+ 					 				  AND m1.movie_cd = s1.movie_cd
+ 		   							  AND s1.screen_cd = r1.screen_cd 
+		  							  AND TO_CHAR(r1.resdate, 'YYYYMMDD')  = TO_CHAR(sysdate-1,'YYYYMMDD'))
+			       				 / 
+			       				(SELECT DECODE((SELECT count(*) FROM RESERVATION r WHERE TO_CHAR(resdate, 'YYYYMMDD')  = TO_CHAR(sysdate-1,'YYYYMMDD')), 0, 1, (SELECT count(*) FROM RESERVATION r WHERE TO_CHAR(resdate, 'YYYYMMDD')  = TO_CHAR(sysdate-1,'YYYYMMDD'))) FROM DUAL)
+		       				, 4) * 100 reserveRatio
+ 					   FROM dual
+	</select> 
+	
+	<select id="selectMovieByMovie_cd" resultType="Map">
+		SELECT *
+		  FROM movie m
+		 WHERE movie_cd = #{movie_cd}
+	</select>
+	
+	<select id="selectGenreByMovie_cd" resultType="str">
+		SELECT genre_cd
+		  FROM genre_c
+		 WHERE movie_cd = #{movie_cd}
+	</select>
+	
+	<select id="selectTypeByMovie_cd" resultType="str">
+		SELECT movie_type_cd
+		  FROM MOVIE_TYPE_C
+		 WHERE movie_cd = #{movie_cd}
+	</select>
+	
+	<select id="selectMoiveImgByMovie_cd" resultType="Map">
+		SELECT *
+		  FROM movie_picture
+		 WHERE movie_cd = #{movie_cd}
+	</select>
+	
+	<update id="updateMovie">
+		UPDATE movie
+		   SET movie_name = #{movie_name}
+		      ,movie_director = #{movie_director}
+		      ,movie_info = #{movie_info}
+		      ,movie_actor = #{movie_actor}
+		      ,movie_grade = #{movie_grade}
+		      ,movie_length = #{movie_length}
+		      ,enddate = #{enddate}
+		      ,movie_mainpic_path = #{movie_mainpic_path}
+		 WHERE movie_cd = #{movie_cd}
+	</update>
+	
+	<delete id="deleteMovieGenre_c">
+		DELETE FROM genre_c WHERE movie_cd = #{movie_cd}
+	</delete>
+	
+	<delete id="deleteMovieType_c">
+		DELETE FROM MOVIE_TYPE_C WHERE movie_cd = #{movie_cd}
+	</delete>
+	
+	<select id="selectMovieDelImgByPno" resultType="str">
+		SELECT movie_pic_path
+		  FROM movie_picture
+		 WHERE movie_pic_no = #{pno}
+	</select>
+	
+	<delete id="deleteMovieImg">
+		DELETE FROM MOVIE_PICTURE WHERE movie_pic_no = #{pno}
+	</delete>
+	
+	<select id="selectMovieDelVideoByPno" resultType="str">
+		SELECT movie_pre_path
+		  FROM movie_preview
+		 WHERE movie_pre_no = #{pre}
+	</select>
+	
+	<delete id="deleteMovieVideo">
+		DELETE FROM movie_preview WHERE movie_pre_no = #{pno}
+	</delete>
+	
+	<select id="selectMoiveVideoByMovie_cd" resultType="Map">
+		SELECT *
+		  FROM movie_preview
+		 WHERE movie_cd = #{movie_cd}
+	</select>
+	
+	<select id="selectproductList" resultType="product">
+		SELECT *
+		  FROM product
+		 WHERE 1 = 1
+		<if test="CategoryIdx == '1'.toString()">
+			AND product_div = '기프트카드'
+		</if>
+		<if test="CategoryIdx == '2'.toString()">
+			AND product_div = '팝콘/스낵/음료'
+		</if>
+		 ORDER BY GB_DEL ASC, PRODUCT_CD DESC
+	</select>
+	
+	<insert id="insertProduct">
+		INSERT INTO product
+					(
+					 PRODUCT_CD
+					,PRODUCT_NAME
+					,PRODUCT_CONTENT
+					,PRODUCT_PRICE
+					,PRODUCT_DIV
+					,PRODUCT_PERIOD
+					,PRODUCT_INFO
+					,PRODUCT_PIC_PATH
+					,GB_DEL
+					)
+			 VALUES (
+					 'P' || (SELECT TO_CHAR(SYSDATE, 'YYYYMMDD') FROM dual) || LPAD(product_seq.nextval,4,0)
+					,#{product_name}
+					,#{product_content}
+					,#{product_price}
+					,#{product_div}
+					,#{product_period}
+					,#{product_info}
+					,#{product_pic_path}
+					,'N'
+			 		)
+		<selectKey resultType="str" keyProperty="product_cd" order="AFTER">
+			SELECT 'P' || (SELECT TO_CHAR(SYSDATE, 'YYYYMMDD') FROM dual d1) || LPAD(product_seq.currval,4,0) movie_cd FROM dual d2
+		</selectKey>
+	</insert>
+	
+	<update id="updateProduct">
+		UPDATE product
+		   SET product_name = #{product_name}
+		      ,product_content = #{product_content}
+		      ,product_price = #{product_price}
+		      ,product_div = #{product_div}
+		      ,product_period = #{product_period}
+		      ,product_info = #{product_info}
+		      ,product_pic_path = #{product_pic_path}
+		 WHERE product_cd = #{product_cd}
+	</update>
+	
+	<update id="unactiveProduct">
+		UPDATE product
+		   SET gb_del = 'Y'
+		 WHERE product_cd = #{product_cd} 
+	</update>
+	
+	<update id="activeProduct">
+		UPDATE product
+		   SET gb_del = 'N'
+		 WHERE product_cd = #{product_cd}
+	</update>
+	
+	<select id="selectNoticeList" resultType="notice">
+		SELECT *
+		  FROM notice
+		 WHERE gb_del = 'N'
+		  <include refid="searchNotice"/>
+		 ORDER BY notice_no DESC
+	</select>
+	
+	<select id="selectSearchNoticeListCount" resultType="int">
+		SELECT COUNT(*)
+		  FROM notice
+		 WHERE gb_del = 'N'
+		<include refid="searchNotice"/>
+	</select>
+	
+	<select id="selectNoticeByNotice_no" resultType="notice">
+		SELECT *
+		  FROM notice
+		 WHERE notice_no = #{notice_no}
+	</select>
+	
+	<insert id="insertNotice">
+		INSERT INTO notice
+					(
+					 notice_no
+					,admin_cd
+					,notice_title
+					,notice_content
+					,notice_thr
+					,regdate
+					,gb_del
+					)
+			 VALUES (
+			 		 notice_seq.nextval
+			 		,'S202307200022'
+			 		,#{notice_title}
+			 		,#{notice_content}
+			 		,'DW시네마'
+			 		,SYSDATE
+			 		,'N'
+			 		)		
+	</insert>
+	
+	<update id="updateNotice">
+		UPDATE notice
+		   SET notice_title = #{notice_title}
+		      ,notice_content = #{notice_content}
+		      ,updatedate = SYSDATE
+		 WHERE notice_no = #{notice_no}
+	</update>
+	
+	<update id="deleteNotice">
+		UPDATE notice
+		   SET gb_del = 'Y'
+		 WHERE notice_no = #{notice_no}
+	</update>
+	
+	<select id="selectFaqList" resultType="faq">
+		SELECT *
+		  FROM faq
+		 WHERE gb_del = 'N'
+		 <include refid="searchFaq"/>
+		 ORDER BY faq_no DESC
+	</select>
+	
+	<select id="selectSearchFaqListCount" resultType="int">
+		SELECT COUNT(*)
+		  FROM faq
+		 WHERE gb_del = 'N'
+		 <include refid="searchFaq"/>
+	</select>
+	
+	<insert id="insertFaq">
+		INSERT INTO faq
+					(
+					 faq_no
+					,faq_title
+					,faq_content
+					,regdate
+					,gb_del
+					,faq_div
+					)
+			 VALUES (
+			 		 faq_seq.nextval
+			 		,#{faq_title}
+			 		,#{faq_content}
+			 		,SYSDATE
+			 		,'N'
+			 		,#{faq_div}
+			 		)
+	</insert>
+	
+	<update id="updateFaq">
+		UPDATE faq
+		   SET faq_title = #{faq_title}
+		      ,faq_content = #{faq_content}
+		      ,faq_div = #{faq_div}
+		      ,updatedate = SYSDATE
+		 WHERE faq_no = #{faq_no}
+	</update>
+	
+	<update id="deleteFaq">
+		UPDATE faq
+		   SET gb_del = 'Y'
+		 WHERE faq_no = ${faq_no}
+	</update>
+	
+	<select id="selectQnaList" resultType="qna">
+		SELECT *
+		  FROM question q, answer a
+		 WHERE que_sel = 'S'
+		   AND q.que_no = a.que_no(+)
+		 <include refid="searchQna"/>
+		 ORDER BY q.que_no DESC
+	</select>
+	
+	<select id="selectSearchQnaListCount" resultType="int">
+		SELECT COUNT(*)
+		  FROM question q, answer a
+		 WHERE que_sel = 'S'
+		   AND q.que_no = a.que_no(+)
+		 <include refid="searchQna"/>
+	</select>
+	
+	<select id="selectQnaByQue_no" resultType="qna">
+		SELECT *
+		  FROM question
+		 WHERE que_no = #{que_no}
+	</select>
+	
+	<select id="selectQnaAttachByQue_no" resultType="attach">
+		SELECT *
+		  FROM question_attach
+		 WHERE que_no = #{que_no}
+	</select>
+	
+	<select id="selectQnaAttachByAno" resultType="attach">
+		SELECT *
+		  FROM question_attach
+		 WHERE attach_no = #{ano}
+	</select>
+	
+	<select id='selectAnsByQue_no' resultType="ans">
+		SELECT *
+		  FROM answer
+		 WHERE que_no = #{que_no}
+	</select>
+	
+	<insert id="insertAns">
+		INSERT INTO answer
+		     VALUES (#{que_no}, 'S202307200022', #{ans_content}, SYSDATE)   
+	</insert>
+	
+	<update id="updateAns">
+		UPDATE answer
+		   SET ans_content = #{ans_content}
+		 WHERE que_no = #{que_no}
+	</update>
+	
+	<select id="selectEventList" resultType="event">
+		SELECT *
+		  FROM event
+		 WHERE enddate <![CDATA[>=]]> SYSDATE
+		 <include refid="searchEvent"/>
+		 ORDER BY startdate DESC
+	</select>
+	
+	<select id="selectSearchEventListCount" resultType="int">
+		SELECT COUNT(*)
+		  FROM event
+		 WHERE enddate <![CDATA[>=]]> SYSDATE
+		 <include refid="searchEvent"/>
+	</select>
+	
+	<select id="selectmovEventList" resultType="event">
+		SELECT *
+		  FROM (
+		  		SELECT * 
+		  		  FROM event 
+		  		 WHERE event_div = '영화' 
+		  		 ORDER BY startdate DESC 
+		  		)
+		  WHERE ROWNUM <![CDATA[<=]]> 4	
+	</select>
+	
+	<select id="selectThrEventList" resultType="event">
+		SELECT *
+ 		  FROM (
+  				SELECT * 
+  		 		  FROM event 
+  				 WHERE event_div = '극장' 
+  		 		 ORDER BY startdate DESC 
+  				)
+ 		 WHERE ROWNUM <![CDATA[<=]]> 4	
+	</select>
+	
+	<select id="selectactorEventList" resultType="event">
+		SELECT *
+		  FROM (
+		  		SELECT * 
+		  		  FROM event 
+		  		 WHERE event_div = '시사회/무대인사' 
+		  		 ORDER BY startdate DESC 
+		  		)
+		  WHERE ROWNUM <![CDATA[<=]]> 4			
+	</select>
+	
+	<select id="selectMovieListForEventRegist" resultType="map">
+		SELECT MOVIE_CD, MOVIE_NAME, MOVIE_MAINPIC_PATH
+		  FROM movie
+		 WHERE TO_CHAR(enddate, 'yyyy-MM-dd') <![CDATA[>]]> TO_CHAR(SYSDATE, 'yyyy-MM-dd')
+	</select>
+	
+	<insert id="insertEvent">
+		INSERT INTO event
+		            (
+		           	 event_no
+		           	,relate_cd
+		           	,event_div
+		           	,startdate
+		           	,enddate
+		           	,event_title
+		           	,event_content
+		           	,event_pic_path
+		           	,regdate
+		           	,event_thum_path
+		            )
+		     VALUES (
+		     		 event_seq.nextval
+		     		,#{relate_cd}
+		     		,#{event_div}
+		     		,#{startdate}
+		     		,#{enddate}
+		     		,#{event_title}
+		     		,#{event_content}
+		     		,#{event_pic_path}
+		     		,SYSDATE
+		     		,#{event_thum_path}
+		      		)      
+ 		<selectKey resultType="int" keyProperty="event_no" order="AFTER">
+			select event_seq.currval from dual
+		</selectKey>
+	</insert>
+	
+	<select id="selectEventByEvent_no" resultType="event">
+		SELECT e.*, m.movie_name
+		  FROM event e, movie m
+		 WHERE event_no = #{event_no}
+		   AND e.relate_cd = m.movie_cd(+)
+	</select>
+	
+	<update id="updateEventContent">
+		UPDATE event
+		   SET event_content = #{newContent} 
+		 WHERE event_no = #{event_no}
+	</update>
+	
+	<update id="updateEvent">
+		UPDATE event
+		   SET event_div = #{event_div}
+		      ,enddate = #{enddate}
+		      ,event_title = #{event_title}
+		      ,event_content = #{event_content}
+		      <if test="event_pic_path != ''.toString()">
+		      ,event_pic_path = #{event_pic_path}
+		      </if>
+		      <if test="event_thum_path != null">
+		      ,event_thum_path = #{event_thum_path}
+		      </if>
+		 WHERE event_no = #{event_no}
+	</update>
+	
+	<delete id="deleteEvent">
+		DELETE 
+		  FROM event
+		 WHERE event_no = #{event_no}
+	</delete>
+	
+	<select id="selectEventListforPast" resultType="event">
+		SELECT *
+		  FROM event e, winner_board w
+		 WHERE TO_CHAR(enddate, 'yyyy-MM-dd') <![CDATA[<]]> TO_CHAR(SYSDATE, 'yyyy-MM-dd')
+		   AND e.event_no = w.event_no(+)
+		 <include refid="searchPastEvent"/>
+	</select>
+	
+	<select id="selectEventListforPastCount" resultType="int">
+		SELECT COUNT(*)
+		  FROM event
+		 WHERE TO_CHAR(enddate, 'yyyy-MM-dd') <![CDATA[<]]> TO_CHAR(SYSDATE, 'yyyy-MM-dd')
+		 <include refid="searchPastEvent"/>
+	</select>
+	
+	<insert id="insertWinnerBoard">
+		INSERT INTO winner_board
+		 	 VALUES (
+		 	 		 #{event_no}
+		 	 		,#{winner_content}
+		 	 		,SYSDATE
+		 	 		)
+	</insert>
+	
+	<select id="selectWbByEvent_no" resultType="wb">
+		SELECT *
+		  FROM winner_board
+		 WHERE event_no = #{event_no}
+	</select>
+	
+	<update id="updateWinnerBoard">
+		UPDATE winner_board
+		   SET winner_content = #{winner_content}
+		 WHERE event_no = #{event_no}
+	</update>
+	
+	<delete id="deleteWinnerBoard">
+		DELETE
+		  FROM winner_board
+		 WHERE event_no = #{event_no}
+	</delete>
+	
+	<select id="selectNoticeForMain" resultType="notice">
+		SELECT *
+		  FROM (
+		  		SELECT *
+		  		  FROM notice
+		 		 WHERE gb_del = 'N'
+		   		   AND notice_thr = 'DW시네마'
+		   		 ORDER BY notice_no DESC
+		  		)
+		   WHERE ROWNUM <![CDATA[<=]]> 5
+	</select>
+	
+	<select id="selectQnaForMain" resultType="qna">
+		SELECT *
+  		  FROM (
+  		 		SELECT q.*, a.ANS_CONTENT
+		 		  FROM QUESTION q , ANSWER a 
+		 		 WHERE q.QUE_NO = a.QUE_NO(+) 
+		  		   AND QUE_SEL = 'S'
+			 	 ORDER BY q.QUE_NO DESC
+			    )
+ 		 WHERE ROWNUM <![CDATA[<=]]> 5
+	</select>
+	
+	<select id="selectEventForMainPage" resultType="event">
+		SELECT *
+		  FROM (
+		  		SELECT *
+		  		  FROM event
+		  		 ORDER BY regdate DESC
+		  	    )
+		 WHERE ROWNUM <![CDATA[<=]]> 4
+	</select>
+	
+	<select id="selectCurrentMovieForMain" resultType="movie">
+		SELECT *
+		  FROM (
+				SELECT m.*, nvl(reserve,0) ryCnt
+				  FROM movie m, (
+								SELECT m.movie_cd, count(*) reserve
+								  FROM movie m, screen s, reservation r
+								 WHERE 1=1
+								   AND m.movie_cd = s.movie_cd(+)
+								   AND s.screen_cd = r.screen_cd(+)
+								   AND TO_CHAR(resdate, 'YYYYMMDD') = TO_CHAR(sysdate-1,'YYYYMMDD')
+								 GROUP BY m.movie_cd
+								) r
+				WHERE m.movie_cd = r.movie_cd(+)
+				ORDER BY rycnt desc
+		  		)
+		 WHERE ROWNUM <![CDATA[<=]]> 8
+	</select>
+	
+	<select id="selectMemberList" resultType="member">
+		SELECT *
+		  FROM member
+		 WHERE 1=1
+		<include refid="searchMember"/>
+	</select>
+	
+		<select id="selectMemberListCount" resultType="int">
+		SELECT COUNT(*)
+		  FROM member
+		 WHERE 1=1
+		<include refid="searchMember"/>
+	</select>
+	
+	<select id="selectMemberByMem_cd" resultType="Map">
+		SELECT m2.*, (SELECT COUNT(*)
+  			  			FROM (SELECT * 
+ 		  			  			FROM reply re, REPLY_REPORT rer  
+ 		 					   WHERE re.mem_cd = #{mem_cd} 
+			 		   			 AND re.reply_no = rer.reply_no) 
+ 		     		 ) mrr_cnt,
+ 		    		 (SELECT COUNT(*)
+  			  			FROM (SELECT * 
+ 		  			 		    FROM MOVIEPOST mp, MP_REPORT mpr 
+ 		 			 		   WHERE mp.mem_cd = #{mem_cd} 
+			 		  			 AND mp.mpost_no = mpr.mpost_no) 
+ 		     		 ) mpr_cnt,
+ 		     		(SELECT COUNT(*)
+  			 		   FROM (SELECT * 
+ 		  			 		   FROM review rv, REVIEW_REPORT rvr  
+ 		 					  WHERE rv.mem_cd = #{mem_cd} 
+			 		   			AND rv.review_no = rvr.review_no) 
+ 		     		 ) rvr_cnt,
+ 		     		 (SELECT LISTAGG(thr_name, ' / ') WITHIN GROUP(ORDER BY thr_name)
+  						FROM MEM_LIKE_THEATER mlt
+ 			   		   WHERE mem_cd = #{mem_cd}
+ 			 		 ) thr_like,
+  		     		 (SELECT LISTAGG(g.GENRE_NAME , ' / ') WITHIN GROUP(ORDER BY g.GENRE_NAME)
+  						FROM MEM_LIKE_GENRE mlg, GENRE g
+ 			   		   WHERE mem_cd = #{mem_cd}
+ 			     		 AND mlg.GENRE_CD = g.GENRE_CD
+ 			 		 ) genre_like
+  		  FROM MEMBER m2
+ 		 WHERE m2.MEM_CD = #{mem_cd}
+	</select>
+	
+	<select id="selectWatchedMoviePreviewListByMem_cd" resultType="map">
+		SELECT *
+	 	  FROM (
+	 	  		SELECT s.MOVIE_CD, r2.*, m.MOVIE_NAME, s.STARTDATE, p.PAID_AMOUNT
+ 		  		  FROM SCREEN s, movie m, pay_detail p, (SELECT DISTINCT MAX(screen_cd) screen_cd, merchant_uid mu
+  																, LISTAGG(mem_cat || '-' || count(*), ',') WITHIN GROUP (ORDER BY mem_cat) OVER (PARTITION BY merchant_uid) MEMLIST
+  							 			   		   		   FROM RESERVATION r
+ 										  		  		  WHERE mem_cd = #{mem_cd}
+ 						 				  		  		  GROUP BY MERCHANT_UID , MEM_CAT 
+ 						 				  		  		  ORDER BY MERCHANT_UID DESC) r2   
+		 		 WHERE s.SCREEN_CD = r2.SCREEN_CD
+		   		   AND r2.MU = p.MERCHANT_UID
+		   		   AND s.MOVIE_CD = m.MOVIE_CD
+	 	  		)
+	 	  WHERE ROWNUM <![CDATA[<=]]> 5	
+	</select>
+	
+	<select id="selectReviewPreviewListByMem_cd" resultType="map">
+		SELECT *
+		  FROM (
+  		  		SELECT r.REVIEW_NO , MAX(r.MOVIE_CD) movie_cd, MAX(r.MEM_CD) mem_cd
+  			  		 , MAX(REVIEW_RATING) review_rating, MAX(r.REVIEW_CONTENT) review_content
+  			 		 , MAX(r.REGDATE) regdate, MAX(r.GB_DEL) gb_del, MAX(r.UPDATEDATE) updatedate
+  			 		 , MAX(m.MOVIE_NAME) movie_name
+  			 		 , MAX((SELECT COUNT(*) FROM REVIEW_REPORT rr WHERE r.REVIEW_NO = rr.REVIEW_NO AND r.MEM_CD = #{mem_cd})) reportcnt
+	 	 			 , MAX((SELECT COUNT(*) FROM REVIEW_LIKE rl WHERE r.REVIEW_NO = rl.REVIEW_NO AND r.MEM_CD = #{mem_cd})) likeCnt  
+  		  		  FROM REVIEW r, MOVIE m
+  		 		 WHERE r.MOVIE_CD = m.MOVIE_CD
+  		   		   AND r.mem_cd = #{mem_cd}
+  				 GROUP BY r.REVIEW_NO
+  				 ORDER BY regdate DESC
+		  		)
+		 WHERE ROWNUM <![CDATA[<=]]> 5	
+	</select>
+	
+	<select id="selectMpPreviewListByMem_cd" resultType="map">
+		SELECT *
+		  FROM (
+		  		SELECT MAX(mp.MPOST_NO) mpost_no, MAX(mp.MEM_CD) MEM_CD, MAX(mp.MOVIE_CD) movie_cd
+  			 	, MAX(mp.MPOST_CONTENT) mpost_content, MAX(mp.MOVIE_PIC_NO) MOVIE_PIC_NO
+  			 	, MAX(mp.GB_DEL) GB_DEL, MAX(mp.REGDATE) regdate, MAX(mp.UPDATEDATE) updatedate
+  			 	, MAX(m.MOVIE_NAME) movie_name
+  			 	, MAX((SELECT COUNT(*) FROM MP_REPORT mr WHERE mp.MPOST_NO = mr.MPOST_NO AND mp.MEM_CD = #{mem_cd})) reportcnt
+		 		, MAX((SELECT COUNT(*) FROM MP_LIKE ml WHERE mp.MPOST_NO = ml.MPOST_NO AND mp.MEM_CD = #{mem_cd})) likeCnt
+		  		  FROM moviepost mp, movie m
+		  		 WHERE mp.movie_cd = m.movie_cd 
+		  		   AND mp.mem_cd = #{mem_cd}
+		  		 GROUP BY mp.MPOST_NO 
+		  		 ORDER BY REGDATE DESC
+		  		)
+		 WHERE ROWNUM <![CDATA[<=]]> 5	
+	</select>
+	
+	<select id="selectMpReplyPreviewListByMem_cd" resultType="map">
+		SELECT *
+		  FROM (
+		  		SELECT MAX(r1.REPLY_NO) REPLY_NO, MAX(r1.MEM_CD) MEM_CD, MAX(r1.MPOST_NO) MPOST_NO, MAX(r1.REPLY_CONTENT) reply_content
+			 		 , MAX(r1.REGDATE) REGDATE, MAX(r1.UPDATEDATE) UPDATEDATE, MAX(r1.GB_DEL) GB_DEL
+			 		 , MAX(m2.MOVIE_NAME) movie_name, MAX(m2.MOVIE_CD) movie_cd
+			 		 , MAX((SELECT COUNT(*) FROM REPLY_REPORT rr WHERE r1.REPLY_NO = rr.REPLY_NO AND rr.MEM_CD = #{mem_cd})) reportcnt  
+				  FROM REPLY r1, MOVIEPOST m , MOVIE m2
+				 WHERE r1.MPOST_NO = m.MPOST_NO 
+				   AND m.MOVIE_CD = m2.MOVIE_CD
+				   AND r1.MEM_CD = #{mem_cd}
+				 GROUP BY r1.REPLY_NO
+				 ORDER BY regdate
+		  		)
+		 WHERE ROWNUM <![CDATA[<=]]> 5	
+	</select>
+	
+	<select id="selectWatchedMovieListByMem_cd" resultType="map">
+		SELECT s.MOVIE_CD, r2.*, m.MOVIE_NAME, s.STARTDATE, p.PAID_AMOUNT
+ 		  FROM SCREEN s, movie m, pay_detail p, (SELECT DISTINCT MAX(screen_cd) screen_cd, merchant_uid mu
+  																, LISTAGG(mem_cat || '-' || count(*), ',') WITHIN GROUP (ORDER BY mem_cat) OVER (PARTITION BY merchant_uid) MEMLIST
+  							 			   		   FROM RESERVATION r
+ 										  		  WHERE mem_cd = #{mem_cd}
+ 						 				  		  GROUP BY MERCHANT_UID , MEM_CAT 
+ 						 				  		  ORDER BY MERCHANT_UID DESC) r2   
+ 		 WHERE s.SCREEN_CD = r2.SCREEN_CD
+   		   AND r2.MU = p.MERCHANT_UID
+   		   AND s.MOVIE_CD = m.MOVIE_CD
+	</select>
+	
+	<select id="selectReviewListByMem_cd" resultType="map">
+  		SELECT r.REVIEW_NO , MAX(r.MOVIE_CD) movie_cd, MAX(r.MEM_CD) mem_cd
+  			  , MAX(REVIEW_RATING) review_rating, MAX(r.REVIEW_CONTENT) review_content
+  			  , MAX(r.REGDATE) regdate, MAX(r.GB_DEL) gb_del, MAX(r.UPDATEDATE) updatedate
+  			  , MAX(m.MOVIE_NAME) movie_name
+  			  , MAX((SELECT COUNT(*) FROM REVIEW_REPORT rr WHERE r.REVIEW_NO = rr.REVIEW_NO AND r.MEM_CD = #{mem_cd})) reportcnt
+	 	 	  , MAX((SELECT COUNT(*) FROM REVIEW_LIKE rl WHERE r.REVIEW_NO = rl.REVIEW_NO AND r.MEM_CD = #{mem_cd})) likeCnt  
+  		  FROM REVIEW r, MOVIE m
+  		 WHERE r.MOVIE_CD = m.MOVIE_CD
+  		   AND r.mem_cd = #{mem_cd}
+  		 GROUP BY r.REVIEW_NO
+  		 ORDER BY regdate DESC
+	</select>
+	
+	
+	<select id="selectMpListByMem_cd" resultType="map">
+		SELECT MAX(mp.MPOST_NO) mpost_no, MAX(mp.MEM_CD) MEM_CD, MAX(mp.MOVIE_CD) movie_cd
+  			 , MAX(mp.MPOST_CONTENT) mpost_content, MAX(mp.MOVIE_PIC_NO) MOVIE_PIC_NO
+  			 , MAX(mp.GB_DEL) GB_DEL, MAX(mp.REGDATE) regdate, MAX(mp.UPDATEDATE) updatedate
+  			 , MAX(m.MOVIE_NAME) movie_name
+  			 , MAX((SELECT COUNT(*) FROM MP_REPORT mr WHERE mp.MPOST_NO = mr.MPOST_NO AND mp.MEM_CD = #{mem_cd})) reportcnt
+  			 , MAX((SELECT COUNT(*) FROM MP_LIKE ml WHERE mp.MPOST_NO = ml.MPOST_NO AND mp.MEM_CD = #{mem_cd})) likeCnt
+  		  FROM moviepost mp, movie m
+  		 WHERE mp.movie_cd = m.movie_cd
+  		   AND mp.mem_cd = #{mem_cd}
+  		 GROUP BY mp.MPOST_NO 
+  		 ORDER BY REGDATE DESC
+	</select>
+	
+	<select id="selectMpReplyListByMem_cd" resultType="map">
+		SELECT MAX(r1.REPLY_NO) REPLY_NO, MAX(r1.MEM_CD) MEM_CD, MAX(r1.MPOST_NO) MPOST_NO, MAX(r1.REPLY_CONTENT) reply_content
+			 , MAX(r1.REGDATE) REGDATE, MAX(r1.UPDATEDATE) UPDATEDATE, MAX(r1.GB_DEL) GB_DEL
+			 , MAX(m2.MOVIE_NAME) movie_name, MAX(m2.MOVIE_CD) movie_cd
+			 , MAX((SELECT COUNT(*) FROM REPLY_REPORT rr WHERE r1.REPLY_NO = rr.REPLY_NO AND rr.MEM_CD = #{mem_cd})) reportcnt 
+				  FROM REPLY r1, MOVIEPOST m , MOVIE m2
+				 WHERE r1.MPOST_NO = m.MPOST_NO 
+				   AND m.MOVIE_CD = m2.MOVIE_CD
+				   AND r1.MEM_CD = #{mem_cd}
+				 GROUP BY r1.REPLY_NO
+				 ORDER BY regdate
+	</select>
+	
+	<update id="banMember">
+		UPDATE member
+		  SET  gb_ban = 'Y'
+		      ,stopdate = SYSDATE
+		 WHERE mem_cd = #{mem_cd}
+	</update>
+	
+	<update id="cancelBanMember">
+		UPDATE member
+		   SET gb_ban = 'N'
+		      ,stopdate = NULL
+		 WHERE mem_cd = #{mem_cd}
+	</update>
+	
+	<update id="deleteReview">
+		UPDATE review
+		   SET gb_del = 'Y'
+		 WHERE review_no = #{review_no}
+		 <selectKey resultType="str" keyProperty="mem_cd" order="AFTER">
+		 	SELECT mem_cd FROM review WHERE review_no = #{review_no}
+		 </selectKey>
+	</update>
+	
+	<update id="deleteMoviePost">
+		UPDATE moviepost
+		   SET gb_del = 'Y'
+		 WHERE mpost_no = #{mpost_no}
+		 <selectKey resultType="str" keyProperty="mem_cd" order="AFTER">
+		 	SELECT mem_cd FROM moviepost WHERE mpost_no = #{mpost_no}
+		 </selectKey>
+	</update>
+	
+	<update id="deleteReply">
+		UPDATE reply
+		   SET gb_del = 'Y'
+		 WHERE reply_no = #{reply_no}
+		 <selectKey resultType="str" keyProperty="mem_cd" order="AFTER">
+		 	SELECT mem_cd FROM reply WHERE reply_no = #{reply_no}
+		 </selectKey>
+	</update>
+</mapper>
